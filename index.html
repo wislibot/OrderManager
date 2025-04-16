@@ -1,19 +1,893 @@
-<!doctype html>
-<html>
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<title>My static Space</title>
-		<link rel="stylesheet" href="style.css" />
-	</head>
-	<body>
-		<div class="card">
-			<h1>Welcome to your static Space!</h1>
-			<p>You can modify this app directly by editing <i>index.html</i> in the Files and versions tab.</p>
-			<p>
-				Also don't forget to check the
-				<a href="https://huggingface.co/docs/hub/spaces" target="_blank">Spaces documentation</a>.
-			</p>
-		</div>
-	</body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Shop Order Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* Animation for buttons */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .pulse:hover {
+            animation: pulse 1s infinite;
+        }
+        
+        /* Transition effects */
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        
+        /* Custom checkbox */
+        .custom-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #4f46e5;
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+            position: relative;
+        }
+        .custom-checkbox:checked {
+            background-color: #4f46e5;
+        }
+        .custom-checkbox:checked::after {
+            content: "✓";
+            position: absolute;
+            color: white;
+            font-size: 14px;
+            left: 3px;
+            top: -1px;
+        }
+
+        /* Product list styles */
+        .product-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .product-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .product-item input {
+            flex-grow: 1;
+            margin-right: 8px;
+        }
+        .remove-product {
+            color: #ef4444;
+            cursor: pointer;
+        }
+        .product-badge {
+            display: inline-block;
+            background-color: #e0e7ff;
+            color: #4f46e5;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            margin-right: 4px;
+            margin-bottom: 4px;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="max-w-md mx-auto bg-white min-h-screen shadow-lg overflow-hidden relative">
+        <!-- Header -->
+        <div class="bg-indigo-600 text-white p-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold">Order Manager</h1>
+            <div class="flex space-x-3">
+                <button id="syncBtn" class="text-white hover:text-indigo-200 transition-all">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button id="settingsBtn" class="text-white hover:text-indigo-200 transition-all">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Tab Navigation -->
+        <div class="flex border-b">
+            <button id="homeTab" class="flex-1 py-3 font-medium text-indigo-600 border-b-2 border-indigo-600">Home</button>
+            <button id="ordersTab" class="flex-1 py-3 font-medium text-gray-500">Orders</button>
+            <button id="statsTab" class="flex-1 py-3 font-medium text-gray-500">Stats</button>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="p-4 overflow-y-auto" style="max-height: calc(100vh - 120px)">
+            <!-- Home Tab Content -->
+            <div id="homeContent">
+                <div class="mb-6">
+                    <h2 class="text-lg font-semibold mb-3 text-gray-800">New Order</h2>
+                    <div class="bg-indigo-50 p-4 rounded-lg">
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1">Platform</label>
+                            <select id="platform" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="">Select Platform</option>
+                                <option value="Tokopedia">Tokopedia</option>
+                                <option value="Shopee">Shopee</option>
+                                <option value="Lazada">Lazada</option>
+                                <option value="Bukalapak">Bukalapak</option>
+                                <option value="Blibli">Blibli</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1">Customer Name</label>
+                            <input type="text" id="customerName" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="John Doe">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1">Order Date & Time</label>
+                            <input type="datetime-local" id="orderDateTime" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1">Products</label>
+                            <div class="flex mb-2">
+                                <input type="text" id="productInput" class="flex-1 p-2 border rounded-l focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Add product">
+                                <button id="addProductBtn" class="bg-indigo-600 text-white px-3 rounded-r hover:bg-indigo-700 transition-all">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div id="productList" class="mb-2">
+                                <!-- Products will be added here -->
+                            </div>
+                            <ul id="productsList" class="product-list hidden">
+                                <!-- Products list for display -->
+                            </ul>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-1">Courier</label>
+                            <select id="courier" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="">Select Courier</option>
+                                <option value="JNE">JNE</option>
+                                <option value="SPX">SPX Express</option>
+                                <option value="SiCepat">SiCepat</option>
+                                <option value="Wahana">Wahana</option>
+                                <option value="J&T">J&T Express</option>
+                                <option value="Lion Parcel">Lion Parcel</option>
+                                <option value="J&T Cargo">J&T Cargo</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <button id="saveOrderBtn" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-all pulse">
+                            <i class="fas fa-save mr-2"></i> Save Order
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h2 class="text-lg font-semibold mb-3 text-gray-800">Retrieve Orders</h2>
+                    <div class="bg-indigo-50 p-4 rounded-lg">
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1">Filter by Date</label>
+                            <input type="date" id="filterDate" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1">Filter by Platform</label>
+                            <select id="filterPlatform" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="">All Platforms</option>
+                                <option value="Tokopedia">Tokopedia</option>
+                                <option value="Shopee">Shopee</option>
+                                <option value="Lazada">Lazada</option>
+                                <option value="Bukalapak">Bukalapak</option>
+                                <option value="Blibli">Blibli</option>
+                            </select>
+                        </div>
+                        
+                        <button id="retrieveBtn" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-all pulse">
+                            <i class="fas fa-search mr-2"></i> Retrieve Orders
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Orders Tab Content (hidden by default) -->
+            <div id="ordersContent" class="hidden">
+                <h2 class="text-lg font-semibold mb-3 text-gray-800">Upcoming Orders</h2>
+                <div id="orderList" class="space-y-3">
+                    <!-- Orders will be displayed here -->
+                </div>
+            </div>
+            
+            <!-- Stats Tab Content (hidden by default) -->
+            <div id="statsContent" class="hidden">
+                <h2 class="text-lg font-semibold mb-3 text-gray-800">Order Statistics</h2>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-blue-50 p-3 rounded-lg">
+                        <p class="text-sm text-blue-600">Today's Orders</p>
+                        <p id="todayOrders" class="text-2xl font-bold text-blue-800">0</p>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded-lg">
+                        <p class="text-sm text-green-600">This Week</p>
+                        <p id="weekOrders" class="text-2xl font-bold text-green-800">0</p>
+                    </div>
+                    <div class="bg-purple-50 p-3 rounded-lg">
+                        <p class="text-sm text-purple-600">This Month</p>
+                        <p id="monthOrders" class="text-2xl font-bold text-purple-800">0</p>
+                    </div>
+                    <div class="bg-yellow-50 p-3 rounded-lg">
+                        <p class="text-sm text-yellow-600">Total Orders</p>
+                        <p id="totalOrders" class="text-2xl font-bold text-yellow-800">0</p>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h3 class="font-medium text-gray-700 mb-2">Platform Distribution</h3>
+                    <div id="platformChart" class="h-40">
+                        <!-- Chart will be rendered here -->
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="font-medium text-gray-700 mb-2">Courier Distribution</h3>
+                    <div id="courierChart" class="h-40">
+                        <!-- Chart will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Edit Order Modal (hidden by default) -->
+        <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+            <div class="bg-white rounded-lg w-full max-w-md max-h-screen overflow-y-auto">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h3 class="text-lg font-semibold">Edit Order</h3>
+                    <button id="closeEditModal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="p-4">
+                    <div class="mb-3">
+                        <label class="block text-gray-700 mb-1">Platform</label>
+                        <select id="editPlatform" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="Tokopedia">Tokopedia</option>
+                            <option value="Shopee">Shopee</option>
+                            <option value="Lazada">Lazada</option>
+                            <option value="Bukalapak">Bukalapak</option>
+                            <option value="Blibli">Blibli</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="block text-gray-700 mb-1">Customer Name</label>
+                        <input type="text" id="editCustomerName" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="block text-gray-700 mb-1">Order Date & Time</label>
+                        <input type="datetime-local" id="editOrderDateTime" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="block text-gray-700 mb-1">Products</label>
+                        <div class="flex mb-2">
+                            <input type="text" id="editProductInput" class="flex-1 p-2 border rounded-l focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Add product">
+                            <button id="editAddProductBtn" class="bg-indigo-600 text-white px-3 rounded-r hover:bg-indigo-700 transition-all">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="editProductList" class="mb-2">
+                            <!-- Products will be added here -->
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-1">Courier</label>
+                        <select id="editCourier" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="JNE">JNE</option>
+                            <option value="SPX">SPX Express</option>
+                            <option value="SiCepat">SiCepat</option>
+                            <option value="Wahana">Wahana</option>
+                            <option value="J&T">J&T Express</option>
+                            <option value="Lion Parcel">Lion Parcel</option>
+                            <option value="J&T Cargo">J&T Cargo</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button id="updateOrderBtn" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-all">
+                            <i class="fas fa-save mr-2"></i> Update
+                        </button>
+                        <button id="deleteOrderBtn" class="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-all">
+                            <i class="fas fa-trash mr-2"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Notification Toast (hidden by default) -->
+        <div id="toast" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg hidden z-50">
+            <span id="toastMessage">Order saved successfully!</span>
+        </div>
+    </div>
+
+    <script>
+        // Database simulation using localStorage
+        const ORDER_DB_KEY = 'onlineShopOrders';
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize database if not exists
+            if (!localStorage.getItem(ORDER_DB_KEY)) {
+                localStorage.setItem(ORDER_DB_KEY, JSON.stringify([]));
+            }
+            
+            // Tab switching
+            document.getElementById('homeTab').addEventListener('click', () => switchTab('home'));
+            document.getElementById('ordersTab').addEventListener('click', () => switchTab('orders'));
+            document.getElementById('statsTab').addEventListener('click', () => switchTab('stats'));
+            
+            // Product management
+            document.getElementById('addProductBtn').addEventListener('click', addProduct);
+            document.getElementById('productInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addProduct();
+            });
+            
+            document.getElementById('editAddProductBtn').addEventListener('click', addEditProduct);
+            document.getElementById('editProductInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addEditProduct();
+            });
+            
+            // Save order button
+            document.getElementById('saveOrderBtn').addEventListener('click', saveOrder);
+            
+            // Retrieve orders button
+            document.getElementById('retrieveBtn').addEventListener('click', retrieveOrders);
+            
+            // Edit modal buttons
+            document.getElementById('closeEditModal').addEventListener('click', () => {
+                document.getElementById('editModal').classList.add('hidden');
+            });
+            
+            document.getElementById('updateOrderBtn').addEventListener('click', updateOrder);
+            document.getElementById('deleteOrderBtn').addEventListener('click', deleteOrder);
+            
+            // Sync button (just for show in this demo)
+            document.getElementById('syncBtn').addEventListener('click', () => {
+                showToast('Data synchronized!');
+            });
+            
+            // Settings button (just for show in this demo)
+            document.getElementById('settingsBtn').addEventListener('click', () => {
+                showToast('Settings opened!');
+            });
+            
+            // Load initial data
+            retrieveOrders();
+            updateStats();
+        });
+        
+        // Switch between tabs
+        function switchTab(tab) {
+            document.getElementById('homeContent').classList.add('hidden');
+            document.getElementById('ordersContent').classList.add('hidden');
+            document.getElementById('statsContent').classList.add('hidden');
+            
+            document.getElementById('homeTab').classList.remove('text-indigo-600', 'border-indigo-600');
+            document.getElementById('ordersTab').classList.remove('text-indigo-600', 'border-indigo-600');
+            document.getElementById('statsTab').classList.remove('text-indigo-600', 'border-indigo-600');
+            
+            document.getElementById('homeTab').classList.add('text-gray-500');
+            document.getElementById('ordersTab').classList.add('text-gray-500');
+            document.getElementById('statsTab').classList.add('text-gray-500');
+            
+            if (tab === 'home') {
+                document.getElementById('homeContent').classList.remove('hidden');
+                document.getElementById('homeTab').classList.remove('text-gray-500');
+                document.getElementById('homeTab').classList.add('text-indigo-600', 'border-indigo-600');
+            } else if (tab === 'orders') {
+                document.getElementById('ordersContent').classList.remove('hidden');
+                document.getElementById('ordersTab').classList.remove('text-gray-500');
+                document.getElementById('ordersTab').classList.add('text-indigo-600', 'border-indigo-600');
+            } else if (tab === 'stats') {
+                document.getElementById('statsContent').classList.remove('hidden');
+                document.getElementById('statsTab').classList.remove('text-gray-500');
+                document.getElementById('statsTab').classList.add('text-indigo-600', 'border-indigo-600');
+                updateStats();
+            }
+        }
+        
+        // Add product to the order form
+        function addProduct() {
+            const productInput = document.getElementById('productInput');
+            const productName = productInput.value.trim();
+            
+            if (productName === '') return;
+            
+            const productList = document.getElementById('productList');
+            const productId = 'product-' + Date.now();
+            
+            const productElement = document.createElement('div');
+            productElement.className = 'product-item';
+            productElement.innerHTML = `
+                <input type="text" id="${productId}" value="${productName}" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500" readonly>
+                <button class="remove-product" data-id="${productId}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            productList.appendChild(productElement);
+            productInput.value = '';
+            
+            // Add event listener to remove button
+            productElement.querySelector('.remove-product').addEventListener('click', function() {
+                productList.removeChild(productElement);
+            });
+        }
+        
+        // Add product to the edit order form
+        function addEditProduct() {
+            const productInput = document.getElementById('editProductInput');
+            const productName = productInput.value.trim();
+            
+            if (productName === '') return;
+            
+            const productList = document.getElementById('editProductList');
+            const productId = 'edit-product-' + Date.now();
+            
+            const productElement = document.createElement('div');
+            productElement.className = 'product-item';
+            productElement.innerHTML = `
+                <input type="text" id="${productId}" value="${productName}" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500" readonly>
+                <button class="remove-product" data-id="${productId}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            productList.appendChild(productElement);
+            productInput.value = '';
+            
+            // Add event listener to remove button
+            productElement.querySelector('.remove-product').addEventListener('click', function() {
+                productList.removeChild(productElement);
+            });
+        }
+        
+        // Get products from the product list
+        function getProductsFromList(listElement) {
+            const products = [];
+            const productItems = listElement.querySelectorAll('.product-item');
+            
+            productItems.forEach(item => {
+                const input = item.querySelector('input');
+                if (input && input.value.trim() !== '') {
+                    products.push(input.value.trim());
+                }
+            });
+            
+            return products;
+        }
+        
+        // Save a new order
+        function saveOrder() {
+            const platform = document.getElementById('platform').value;
+            const customerName = document.getElementById('customerName').value;
+            const orderDateTime = document.getElementById('orderDateTime').value;
+            const courier = document.getElementById('courier').value;
+            
+            // Get products from the list
+            const productList = document.getElementById('productList');
+            const products = getProductsFromList(productList);
+            
+            if (!platform || !customerName || !orderDateTime || products.length === 0 || !courier) {
+                showToast('Please fill all fields and add at least one product!', 'red-500');
+                return;
+            }
+            
+            const orders = JSON.parse(localStorage.getItem(ORDER_DB_KEY));
+            const newOrder = {
+                id: Date.now().toString(),
+                platform,
+                customerName,
+                orderDateTime,
+                products,
+                courier,
+                status: 'pending'
+            };
+            
+            orders.push(newOrder);
+            localStorage.setItem(ORDER_DB_KEY, JSON.stringify(orders));
+            
+            // Clear form
+            document.getElementById('platform').value = '';
+            document.getElementById('customerName').value = '';
+            document.getElementById('orderDateTime').value = '';
+            document.getElementById('courier').value = '';
+            document.getElementById('productList').innerHTML = '';
+            document.getElementById('productInput').value = '';
+            
+            showToast('Order saved successfully!');
+            retrieveOrders();
+            updateStats();
+        }
+        
+        // Retrieve and display orders
+        function retrieveOrders() {
+            const filterDate = document.getElementById('filterDate').value;
+            const filterPlatform = document.getElementById('filterPlatform').value;
+            
+            let orders = JSON.parse(localStorage.getItem(ORDER_DB_KEY));
+            
+            // Filter orders
+            if (filterDate) {
+                const selectedDate = new Date(filterDate).toDateString();
+                orders = orders.filter(order => {
+                    const orderDate = new Date(order.orderDateTime).toDateString();
+                    return orderDate === selectedDate;
+                });
+            }
+            
+            if (filterPlatform) {
+                orders = orders.filter(order => order.platform === filterPlatform);
+            }
+            
+            // Sort by date (newest first)
+            orders.sort((a, b) => new Date(b.orderDateTime) - new Date(a.orderDateTime));
+            
+            // Display orders
+            const orderList = document.getElementById('orderList');
+            orderList.innerHTML = '';
+            
+            if (orders.length === 0) {
+                orderList.innerHTML = '<p class="text-gray-500 text-center py-4">No orders found</p>';
+                return;
+            }
+            
+            orders.forEach(order => {
+                const orderDate = new Date(order.orderDateTime);
+                const formattedDate = orderDate.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                // Create product badges
+                let productBadges = '';
+                order.products.forEach(product => {
+                    productBadges += `<span class="product-badge">${product}</span>`;
+                });
+                
+                const orderElement = document.createElement('div');
+                orderElement.className = 'bg-white p-3 rounded-lg shadow border border-gray-100 hover:shadow-md transition-all';
+                orderElement.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <span class="px-2 py-1 text-xs rounded ${getPlatformColor(order.platform)}">${order.platform}</span>
+                            <span class="px-2 py-1 text-xs rounded ${getCourierColor(order.courier)} ml-1">${order.courier}</span>
+                        </div>
+                        <span class="text-xs text-gray-500">${formattedDate}</span>
+                    </div>
+                    <h3 class="font-medium text-gray-800 mb-1">${order.customerName}</h3>
+                    <div class="mb-2 flex flex-wrap">${productBadges}</div>
+                    <div class="flex justify-end">
+                        <button class="text-indigo-600 hover:text-indigo-800 edit-btn" data-id="${order.id}">
+                            <i class="fas fa-edit mr-1"></i> Edit
+                        </button>
+                    </div>
+                `;
+                
+                orderList.appendChild(orderElement);
+            });
+            
+            // Add event listeners to edit buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const orderId = this.getAttribute('data-id');
+                    openEditModal(orderId);
+                });
+            });
+        }
+        
+        // Open edit modal with order data
+        function openEditModal(orderId) {
+            const orders = JSON.parse(localStorage.getItem(ORDER_DB_KEY));
+            const order = orders.find(o => o.id === orderId);
+            
+            if (!order) return;
+            
+            // Format datetime for the input field
+            const orderDate = new Date(order.orderDateTime);
+            const formattedDateTime = `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, '0')}-${String(orderDate.getDate()).padStart(2, '0')}T${String(orderDate.getHours()).padStart(2, '0')}:${String(orderDate.getMinutes()).padStart(2, '0')}`;
+            
+            // Fill the form
+            document.getElementById('editPlatform').value = order.platform;
+            document.getElementById('editCustomerName').value = order.customerName;
+            document.getElementById('editOrderDateTime').value = formattedDateTime;
+            document.getElementById('editCourier').value = order.courier;
+            
+            // Clear existing products and add new ones
+            const productList = document.getElementById('editProductList');
+            productList.innerHTML = '';
+            
+            order.products.forEach(product => {
+                const productId = 'edit-product-' + Date.now();
+                const productElement = document.createElement('div');
+                productElement.className = 'product-item';
+                productElement.innerHTML = `
+                    <input type="text" id="${productId}" value="${product}" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500" readonly>
+                    <button class="remove-product" data-id="${productId}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                productList.appendChild(productElement);
+                
+                // Add event listener to remove button
+                productElement.querySelector('.remove-product').addEventListener('click', function() {
+                    productList.removeChild(productElement);
+                });
+            });
+            
+            // Store the order ID in the modal for later reference
+            document.getElementById('editModal').setAttribute('data-order-id', orderId);
+            
+            // Show the modal
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+        
+        // Update an existing order
+        function updateOrder() {
+            const orderId = document.getElementById('editModal').getAttribute('data-order-id');
+            const platform = document.getElementById('editPlatform').value;
+            const customerName = document.getElementById('editCustomerName').value;
+            const orderDateTime = document.getElementById('editOrderDateTime').value;
+            const courier = document.getElementById('editCourier').value;
+            
+            // Get products from the list
+            const productList = document.getElementById('editProductList');
+            const products = getProductsFromList(productList);
+            
+            if (!platform || !customerName || !orderDateTime || products.length === 0 || !courier) {
+                showToast('Please fill all fields and add at least one product!', 'red-500');
+                return;
+            }
+            
+            let orders = JSON.parse(localStorage.getItem(ORDER_DB_KEY));
+            const orderIndex = orders.findIndex(o => o.id === orderId);
+            
+            if (orderIndex === -1) return;
+            
+            orders[orderIndex] = {
+                ...orders[orderIndex],
+                platform,
+                customerName,
+                orderDateTime,
+                products,
+                courier
+            };
+            
+            localStorage.setItem(ORDER_DB_KEY, JSON.stringify(orders));
+            document.getElementById('editModal').classList.add('hidden');
+            
+            showToast('Order updated successfully!');
+            retrieveOrders();
+            updateStats();
+        }
+        
+        // Delete an order
+        function deleteOrder() {
+            const orderId = document.getElementById('editModal').getAttribute('data-order-id');
+            let orders = JSON.parse(localStorage.getItem(ORDER_DB_KEY));
+            
+            orders = orders.filter(o => o.id !== orderId);
+            localStorage.setItem(ORDER_DB_KEY, JSON.stringify(orders));
+            document.getElementById('editModal').classList.add('hidden');
+            
+            showToast('Order deleted!', 'red-500');
+            retrieveOrders();
+            updateStats();
+        }
+        
+        // Update statistics
+        function updateStats() {
+            const orders = JSON.parse(localStorage.getItem(ORDER_DB_KEY));
+            const now = new Date();
+            
+            // Today's orders
+            const todayOrders = orders.filter(order => {
+                const orderDate = new Date(order.orderDateTime);
+                return orderDate.toDateString() === now.toDateString();
+            }).length;
+            
+            // This week's orders
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - now.getDay());
+            weekStart.setHours(0, 0, 0, 0);
+            
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            weekEnd.setHours(23, 59, 59, 999);
+            
+            const weekOrders = orders.filter(order => {
+                const orderDate = new Date(order.orderDateTime);
+                return orderDate >= weekStart && orderDate <= weekEnd;
+            }).length;
+            
+            // This month's orders
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+            
+            const monthOrders = orders.filter(order => {
+                const orderDate = new Date(order.orderDateTime);
+                return orderDate >= monthStart && orderDate <= monthEnd;
+            }).length;
+            
+            // Total orders
+            const totalOrders = orders.length;
+            
+            // Update the UI
+            document.getElementById('todayOrders').textContent = todayOrders;
+            document.getElementById('weekOrders').textContent = weekOrders;
+            document.getElementById('monthOrders').textContent = monthOrders;
+            document.getElementById('totalOrders').textContent = totalOrders;
+            
+            // Update platform distribution chart
+            updatePlatformChart();
+            
+            // Update courier distribution chart
+            updateCourierChart();
+        }
+        
+        // Update platform distribution chart (simplified for this demo)
+        function updatePlatformChart() {
+            const orders = JSON.parse(localStorage.getItem(ORDER_DB_KEY));
+            const platforms = ['Tokopedia', 'Shopee', 'Lazada', 'Bukalapak', 'Blibli'];
+            
+            const platformCounts = {};
+            platforms.forEach(platform => {
+                platformCounts[platform] = orders.filter(o => o.platform === platform).length;
+            });
+            
+            // Sort by count
+            const sortedPlatforms = Object.entries(platformCounts)
+                .sort((a, b) => b[1] - a[1])
+                .filter(([_, count]) => count > 0);
+            
+            const chartContainer = document.getElementById('platformChart');
+            chartContainer.innerHTML = '';
+            
+            if (sortedPlatforms.length === 0) {
+                chartContainer.innerHTML = '<p class="text-gray-500 text-center py-4">No data available</p>';
+                return;
+            }
+            
+            const maxCount = Math.max(...sortedPlatforms.map(([_, count]) => count));
+            
+            sortedPlatforms.forEach(([platform, count]) => {
+                const percentage = (count / maxCount) * 100;
+                
+                const bar = document.createElement('div');
+                bar.className = 'mb-2';
+                bar.innerHTML = `
+                    <div class="flex items-center mb-1">
+                        <span class="text-xs w-24 truncate">${platform}</span>
+                        <span class="text-xs font-medium ml-2">${count}</span>
+                    </div>
+                    <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="h-full ${getPlatformColor(platform, true)}" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                
+                chartContainer.appendChild(bar);
+            });
+        }
+        
+        // Update courier distribution chart (simplified for this demo)
+        function updateCourierChart() {
+            const orders = JSON.parse(localStorage.getItem(ORDER_DB_KEY));
+            const couriers = ['JNE', 'SPX', 'SiCepat', 'Wahana', 'J&T', 'Lion Parcel', 'J&T Cargo', 'Other'];
+            
+            const courierCounts = {};
+            couriers.forEach(courier => {
+                courierCounts[courier] = orders.filter(o => o.courier === courier).length;
+            });
+            
+            // Sort by count
+            const sortedCouriers = Object.entries(courierCounts)
+                .sort((a, b) => b[1] - a[1])
+                .filter(([_, count]) => count > 0);
+            
+            const chartContainer = document.getElementById('courierChart');
+            chartContainer.innerHTML = '';
+            
+            if (sortedCouriers.length === 0) {
+                chartContainer.innerHTML = '<p class="text-gray-500 text-center py-4">No data available</p>';
+                return;
+            }
+            
+            const maxCount = Math.max(...sortedCouriers.map(([_, count]) => count));
+            
+            sortedCouriers.forEach(([courier, count]) => {
+                const percentage = (count / maxCount) * 100;
+                
+                const bar = document.createElement('div');
+                bar.className = 'mb-2';
+                bar.innerHTML = `
+                    <div class="flex items-center mb-1">
+                        <span class="text-xs w-24 truncate">${courier}</span>
+                        <span class="text-xs font-medium ml-2">${count}</span>
+                    </div>
+                    <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="h-full ${getCourierColor(courier, true)}" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                
+                chartContainer.appendChild(bar);
+            });
+        }
+        
+        // Helper function to get platform color
+        function getPlatformColor(platform, isBg = false) {
+            const prefix = isBg ? 'bg-' : '';
+            switch (platform) {
+                case 'Tokopedia': return `${prefix}green-500`;
+                case 'Shopee': return `${prefix}orange-500`;
+                case 'Lazada': return `${prefix}red-500`;
+                case 'Bukalapak': return `${prefix}blue-500`;
+                case 'Blibli': return `${prefix}purple-500`;
+                default: return `${prefix}gray-500`;
+            }
+        }
+        
+        // Helper function to get courier color
+        function getCourierColor(courier, isBg = false) {
+            const prefix = isBg ? 'bg-' : '';
+            switch (courier) {
+                case 'JNE': return `${prefix}yellow-500`;
+                case 'SPX': return `${prefix}indigo-500`;
+                case 'SiCepat': return `${prefix}green-500`;
+                case 'Wahana': return `${prefix}red-500`;
+                case 'J&T': return `${prefix}blue-500`;
+                case 'Lion Parcel': return `${prefix}orange-500`;
+                case 'J&T Cargo': return `${prefix}purple-500`;
+                default: return `${prefix}gray-500`;
+            }
+        }
+        
+        // Show toast notification
+        function showToast(message, color = 'green-500') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastMessage.textContent = message;
+            toast.className = `fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-${color} text-white px-4 py-2 rounded-lg shadow-lg z-50`;
+            toast.classList.remove('hidden');
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=PadukaWisli/order-manager-v1" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
 </html>
